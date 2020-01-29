@@ -74,7 +74,7 @@ int enumerate_relay_boards(const char *product, int verbose, int debug)
    //Allocate a buffer for the relays
    if (relay_board_count > 0)
    {
-      relay_boards = malloc((relay_board_count) * sizeof(relay_board));
+      relay_boards = calloc(relay_board_count, sizeof(relay_board));
 
       //Fill the relay structs
       cur_dev = devs;
@@ -97,12 +97,12 @@ int enumerate_relay_boards(const char *product, int verbose, int debug)
          }
          else
          {
-            perror("unable to open device\n");
+            perror("unable to open device - Use root, sudo or set the device permissions via udev\n");
             result = -1;
          }
 
          //Output the device enumeration details if verbose is on
-         if (verbose)
+         if (result != -1 && verbose)
          {
             fprintf(stderr, "Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls", cur_dev->vendor_id, cur_dev->product_id, cur_dev->path, cur_dev->serial_number);
             fprintf(stderr, "\n");
@@ -114,7 +114,7 @@ int enumerate_relay_boards(const char *product, int verbose, int debug)
             fprintf(stderr, "  Number of Relays = %d\n", relay_boards[i].relay_count);
 
             //If verbose and debug are on, output individual relay details
-            if (debug)
+            if (result != -1 && debug)
             {
                for (k = 0; k < relay_boards[i].relay_count; k++)
                {
@@ -289,7 +289,7 @@ void shutdown()
  */
 static int get_board_features(relay_board *board, hid_device *handle)
 {
-   unsigned char buf[9];
+   unsigned char buf[9] = { 0 };
    //Get the features of the device
    buf[0] = 0x01;
    int ret = hid_get_feature_report(handle, buf, sizeof(buf));
